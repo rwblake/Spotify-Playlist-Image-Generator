@@ -33,8 +33,15 @@ def pull_images(playlist_URL):
 			print(f"Image for \'{track['name']}\' couldn't be retrieved.")
 			continue
 
-		with open(f"{track['name']}.png", "wb") as f:
-			shutil.copyfileobj(res.raw, f)
+		try:
+			with open(f"{track['name']}.png", "wb") as f:
+				shutil.copyfileobj(res.raw, f)
+		except OSError as e:  # invalid character in song name
+			if e.errno != 22:
+				raise e
+			with open(f"{track['id']}.png", "wb") as f:
+				shutil.copyfileobj(res.raw, f)
+
 
 	os.chdir("..")
 	# end up in the new playlist directory
