@@ -7,6 +7,26 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
 
+def _pull_images_helper(tracks):
+	for track in tracks["items"]:
+		res = requests.get(track["track"]["album"]["images"][0]["url"], stream = True)
+		if res.status_code != 200:
+			print(f"Image for \'{track['track']['name']}\' couldn't be retrieved.")
+			continue
+
+		try:
+			with open(f"{track['track']['name']}.png", "wb") as f:
+				shutil.copyfileobj(res.raw, f)
+		except OSError as e:  # invalid character in song name, or song name includes directory
+			if e.errno != 22 and e.errno != 2:
+				raise e
+			with open(f"{track['track']['id']}.png", "wb") as f:
+				shutil.copyfileobj(res.raw, f)
+		except FileExistsError:  # songs with the same name
+			with open(f"{track['track']['id']}.png", "wb") as f:
+				shutil.copyfileobj(res.raw, f)
+
+
 def pull_images(playlist_URL):
 	# authenticates request
 	auth_manager = SpotifyClientCredentials()
@@ -14,43 +34,25 @@ def pull_images(playlist_URL):
 
 	# assume that playlist_URL is valid
 	playlist = sp.playlist(playlist_URL)
+	tracks = playlist["tracks"]
 
-	tracks = [{"name":     item["track"]["name"],
-	           "id":       item["track"]["id"],
-	           "image_URL":item["track"]["album"]["images"][0]["url"]
-	          }
-	          for item in playlist["tracks"]["items"]
-	         ]
-
+	# create folder structure
 	if os.path.isdir(playlist["name"]):
 		raise Exception("Album folder already exists. Please delete before running.")
-
-	os.mkdir(playlist["name"])  # to store images
+	os.mkdir(playlist["name"])
 	os.chdir(playlist["name"])
 	os.mkdir("images")
 	os.chdir("images")
 
-	for track in tracks:
-		res = requests.get(track["image_URL"], stream = True)
-		if res.status_code != 200:
-			print(f"Image for \'{track['name']}\' couldn't be retrieved.")
-			continue
+	# loop over each set of 99 songs given by the api
+	_pull_images_helper(tracks)  # download and save images
+	while tracks["next"]:
+		print("hi")
+		tracks = sp.next(tracks)
+		_pull_images_helper(tracks)
 
-		try:
-			with open(f"{track['name']}.png", "wb") as f:
-				shutil.copyfileobj(res.raw, f)
-		except OSError as e:  # invalid character in song name, or song name includes directory
-			if e.errno != 22 and e.errno != 2:
-				raise e
-			with open(f"{track['id']}.png", "wb") as f:
-				shutil.copyfileobj(res.raw, f)
-		except FileExistsError:  # songs with the same name
-			with open(f"{track['id']}.png", "wb") as f:
-				shutil.copyfileobj(res.raw, f)
-
+	# finish in the new playlist directory
 	os.chdir("..")
-	# end up in the new playlist directory
-
 
 
 def main():
