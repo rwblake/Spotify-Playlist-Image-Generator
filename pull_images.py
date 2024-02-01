@@ -47,7 +47,6 @@ def pull_images(playlist_URL):
 	# loop over each set of 99 songs given by the api
 	_pull_images_helper(tracks)  # download and save images
 	while tracks["next"]:
-		print("hi")
 		tracks = sp.next(tracks)
 		_pull_images_helper(tracks)
 
