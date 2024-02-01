@@ -22,6 +22,9 @@ def pull_images(playlist_URL):
 	          for item in playlist["tracks"]["items"]
 	         ]
 
+	if os.path.isdir(playlist["name"]):
+		raise Exception("Album folder already exists. Please delete before running.")
+
 	os.mkdir(playlist["name"])  # to store images
 	os.chdir(playlist["name"])
 	os.mkdir("images")
@@ -36,12 +39,14 @@ def pull_images(playlist_URL):
 		try:
 			with open(f"{track['name']}.png", "wb") as f:
 				shutil.copyfileobj(res.raw, f)
-		except OSError as e:  # invalid character in song name
-			if e.errno != 22:
+		except OSError as e:  # invalid character in song name, or song name includes directory
+			if e.errno != 22 and e.errno != 2:
 				raise e
 			with open(f"{track['id']}.png", "wb") as f:
 				shutil.copyfileobj(res.raw, f)
-
+		except FileExistsError:  # songs with the same name
+			with open(f"{track['id']}.png", "wb") as f:
+				shutil.copyfileobj(res.raw, f)
 
 	os.chdir("..")
 	# end up in the new playlist directory
