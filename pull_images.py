@@ -8,12 +8,18 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 
 def _pull_images_helper(tracks):
-	for track in tracks["items"]:
+	"""Download and save all track images in the current directory."""
+	for track in tracks:
 		res = requests.get(track["track"]["album"]["images"][0]["url"], stream = True)
+
 		if res.status_code != 200:
 			print(f"Image for \'{track['track']['name']}\' couldn't be retrieved.")
 			continue
 
+		with open(f"{track['track']['id']}.png", "wb") as f:
+			shutil.copyfileobj(res.raw, f)
+		# doesn't allow actual song names currently
+		"""
 		try:
 			with open(f"{track['track']['name']}.png", "wb") as f:
 				shutil.copyfileobj(res.raw, f)
@@ -25,39 +31,42 @@ def _pull_images_helper(tracks):
 		except FileExistsError:  # songs with the same name
 			with open(f"{track['track']['id']}.png", "wb") as f:
 				shutil.copyfileobj(res.raw, f)
+		"""
 
 
 def pull_images(playlist_URL):
-	# authenticates request
+	# authenticate request
 	auth_manager = SpotifyClientCredentials()
 	sp = spotipy.Spotify(auth_manager=auth_manager)
 
-	# assume that playlist_URL is valid
-	playlist = sp.playlist(playlist_URL)
+	# pull from Spotify API
+	playlist = sp.playlist(playlist_URL)  # assume that playlist_URL is valid
 	tracks = playlist["tracks"]
 
 	# create folder structure
 	if os.path.isdir(playlist["name"]):
-		raise Exception("Album folder already exists. Please delete before running.")
+		print("Album folder already exists. No images retrieved.")
+		return playlist["name"]
 	os.mkdir(playlist["name"])
 	os.chdir(playlist["name"])
 	os.mkdir("images")
 	os.chdir("images")
 
 	# loop over each set of 99 songs given by the api
-	_pull_images_helper(tracks)  # download and save images
+	_pull_images_helper(tracks["items"])
 	while tracks["next"]:
 		tracks = sp.next(tracks)
-		_pull_images_helper(tracks)
+		_pull_images_helper(tracks["items"])
 
-	# finish in the new playlist directory
-	os.chdir("..")
+	# finish in the main directory
+	os.chdir("../..")
+	return playlist["name"]
 
 
 def main():
 	import sys
 	if len(sys.argv) != 2:
-		sys.stderr.write(f"One argument expected, {sys.argv.length()-1} provided.")
+		print(f"One argument expected, {sys.argv.length()-1} provided.")
 		return
 	pull_images(sys.argv[1])
 
