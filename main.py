@@ -5,6 +5,7 @@ import math
 from PIL import Image
 import imagehash
 import argparse
+from pathlib import Path
 
 
 import ordering
@@ -85,7 +86,7 @@ def main():
 
 	# generate mosaic
 	image = generate_mosaic.generate_mosaic(1600, args.width, order)
-	image.save(f"{playlist_name}_mosaic.png")
+	image.save(f"{Path(args.reference_image).stem}_mosaic.png")
 	image.show()
 
 
