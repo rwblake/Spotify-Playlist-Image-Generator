@@ -5,36 +5,26 @@ import requests
 import shutil
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 
-def _pull_images_helper(tracks):
-	"""Download and save all track images in the current directory."""
-	for track in tracks:
-		try:
-			res = requests.get(track["track"]["album"]["images"][0]["url"], stream = True)
-		except IndexError:  # track doesn't have an online image
-			continue
+MAX_WORKERS = 32
 
-		if res.status_code != 200:
-			print(f"Image for \'{track['track']['name']}\' couldn't be retrieved.")
-			continue
 
-		with open(f"{track['track']['id']}.png", "wb") as f:
-			shutil.copyfileobj(res.raw, f)
-		# doesn't allow actual song names currently
-		"""
-		try:
-			with open(f"{track['track']['name']}.png", "wb") as f:
-				shutil.copyfileobj(res.raw, f)
-		except OSError as e:  # invalid character in song name, or song name includes directory
-			if e.errno != 22 and e.errno != 2:
-				raise e
-			with open(f"{track['track']['id']}.png", "wb") as f:
-				shutil.copyfileobj(res.raw, f)
-		except FileExistsError:  # songs with the same name
-			with open(f"{track['track']['id']}.png", "wb") as f:
-				shutil.copyfileobj(res.raw, f)
-		"""
+def download(track):
+	"Download and save track to current directory."
+	try:
+		res = requests.get(track["track"]["album"]["images"][0]["url"], stream = True)
+	except IndexError:  # track doesn't have an online image
+		return
+
+	if res.status_code != 200:
+		print(f"Image for \'{track['track']['name']}\' couldn't be retrieved.")
+		return
+
+	with open(f"{track['track']['id']}.png", "wb") as f:
+		shutil.copyfileobj(res.raw, f)
 
 
 def pull_images(playlist_URL):
@@ -56,16 +46,20 @@ def pull_images(playlist_URL):
 	os.chdir("images")
 
 	# loop over each set of 99 songs given by the api
-	_pull_images_helper(tracks["items"])
+	track_items = tracks["items"]
 	while tracks["next"]:
 		tracks = sp.next(tracks)
-		_pull_images_helper(tracks["items"])
+		track_items.extend(tracks["items"])
 	# remove temporary .cache file created when multiple iterations of 99 songs are retrieved
 	try:
 		os.remove(".cache")
 	except OSError as e:
 		if e.errno != 2:  # file not found
 			raise e
+
+	# download images concurrently
+	with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+		list(tqdm(executor.map(download, track_items), total=len(track_items)))
 
 	# finish in the main directory
 	os.chdir("../..")
