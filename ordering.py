@@ -10,7 +10,8 @@ def distance(c1, c2):
 	return (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
 
 
-def ordering(reference_image_path, images_wide, averages):
+def _ordering(reference_image_path, images_wide, averages):
+	averages = averages.copy()
 	reference_image = Image.open(reference_image_path)
 	if reference_image.size[0] != reference_image.size[1]:
 		raise Exception("Reference image not square.")
@@ -20,19 +21,29 @@ def ordering(reference_image_path, images_wide, averages):
 	free_pixels = [i for i in range(images_wide**2)]
 	random.shuffle(free_pixels)  # ensure that no pixel is preferentially chosen
 
+	total_distance = 0
+	count = 0
 	for i, pixel_number in enumerate(free_pixels):
 		reference_pixel = reference_image.getpixel((pixel_number % images_wide, pixel_number // images_wide))
 		distances = []
-
 		for (path, average) in averages:
 			distances.append(((path, average), distance(average, reference_pixel)))
 
 		(path, average), d = min(distances, key=lambda x: x[1])
 		averages.remove((path, average))
 		ordering[pixel_number] = path
+		total_distance += d
+		count += 1
 
-	return ordering
+	return ordering, d/count
 
+
+def ordering(reference_image_path, images_wide, averages):
+	# reduce the effects of bad random assignements
+	attempts = []
+	for i in range(10):
+		attempts.append(_ordering(reference_image_path, images_wide, averages))
+	return min(attempts, key=lambda x: x[0])
 
 
 def main():

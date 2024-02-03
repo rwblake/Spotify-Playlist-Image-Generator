@@ -25,13 +25,14 @@ def filter_duplicates(paths):
 
 
 def main():
-	if len(sys.argv) != 4:
-		print(f"Usage: {sys.argv[0]} playlist_url width reference")
+	if len(sys.argv) != 5:
+		print(f"Usage: {sys.argv[0]} playlist_url reference width duplicates")
 		return
 
 	playlist_name = pull_images.pull_images(sys.argv[1])
 	images_wide = int(sys.argv[2])  # how many albums wide the result will be
 	reference = sys.argv[3]
+	duplicates = sys.argv[4]
 
 	os.chdir(playlist_name)
 	os.chdir("images")
@@ -49,7 +50,7 @@ def main():
 			print(len(order[0]), order[1])
 		order = min(orders, key=lambda x:x[1])[0]
 	else:
-		order = ordering.ordering("../../"+reference, images_wide, averages)[0]
+		order = ordering.ordering("../../"+reference, images_wide, averages, duplicates)[0]
 	print(len(order))
 	images_wide = math.floor(math.sqrt(len(order)))
 
