@@ -15,7 +15,6 @@ def generate_mosaic(width, images_wide, image_paths):
 		image.paste(tmp_image, (i % images_wide * tile_width, i // images_wide * tile_width))
 
 	os.chdir("..")
-	image.save("playlist_image.png")
 	return image
 
 

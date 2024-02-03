@@ -85,6 +85,7 @@ def main():
 
 	# generate mosaic
 	image = generate_mosaic.generate_mosaic(1600, args.width, order)
+	image.save(f"{playlist_name}_mosaic.png")
 	image.show()
 
 
