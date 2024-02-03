@@ -30,9 +30,9 @@ def main():
 		return
 
 	playlist_name = pull_images.pull_images(sys.argv[1])
-	images_wide = int(sys.argv[2])  # how many albums wide the result will be
-	reference = sys.argv[3]
-	duplicates = sys.argv[4]
+	images_wide = int(sys.argv[3])  # how many albums wide the result will be
+	reference = sys.argv[2]
+	duplicates = sys.argv[4] != "0"
 
 	os.chdir(playlist_name)
 	os.chdir("images")
