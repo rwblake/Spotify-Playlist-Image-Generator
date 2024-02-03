@@ -10,7 +10,10 @@ from spotipy.oauth2 import SpotifyClientCredentials
 def _pull_images_helper(tracks):
 	"""Download and save all track images in the current directory."""
 	for track in tracks:
-		res = requests.get(track["track"]["album"]["images"][0]["url"], stream = True)
+		try:
+			res = requests.get(track["track"]["album"]["images"][0]["url"], stream = True)
+		except IndexError:  # track doesn't have an online image
+			continue
 
 		if res.status_code != 200:
 			print(f"Image for \'{track['track']['name']}\' couldn't be retrieved.")
