@@ -10,7 +10,7 @@ def distance(c1, c2):
 	return (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
 
 
-def _ordering(reference_image_path, images_wide, averages):
+def _ordering(reference_image_path, images_wide, averages, duplicates):
 	averages = averages.copy()
 	reference_image = Image.open(reference_image_path)
 	if reference_image.size[0] != reference_image.size[1]:
@@ -30,7 +30,8 @@ def _ordering(reference_image_path, images_wide, averages):
 			distances.append(((path, average), distance(average, reference_pixel)))
 
 		(path, average), d = min(distances, key=lambda x: x[1])
-		averages.remove((path, average))
+		if not duplicates:
+			averages.remove((path, average))
 		ordering[pixel_number] = path
 		total_distance += d
 		count += 1
@@ -38,11 +39,11 @@ def _ordering(reference_image_path, images_wide, averages):
 	return ordering, d/count
 
 
-def ordering(reference_image_path, images_wide, averages):
+def ordering(reference_image_path, images_wide, averages, duplicates):
 	# reduce the effects of bad random assignements
 	attempts = []
 	for i in range(10):
-		attempts.append(_ordering(reference_image_path, images_wide, averages))
+		attempts.append(_ordering(reference_image_path, images_wide, averages, duplicates))
 	return min(attempts, key=lambda x: x[0])
 
 
