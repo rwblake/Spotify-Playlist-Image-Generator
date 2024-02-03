@@ -60,6 +60,12 @@ def pull_images(playlist_URL):
 	while tracks["next"]:
 		tracks = sp.next(tracks)
 		_pull_images_helper(tracks["items"])
+	# remove temporary .cache file created when multiple iterations of 99 songs are retrieved
+	try:
+		os.remove(".cache")
+	except OSError as e:
+		if e.errno != 2:  # file not found
+			raise e
 
 	# finish in the main directory
 	os.chdir("../..")
