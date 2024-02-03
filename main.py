@@ -66,7 +66,7 @@ def main():
 
 	# calculate average colour for each image
 	averages = average_color.get_average_colors(image_paths)
-	print(len(averages))
+	print(f"Available images: {len(averages)}")
 
 	# calculate positions (ordering) for images in mosaic
 	if args.width == WIDTH_UNSPECIFIED:
@@ -81,7 +81,7 @@ def main():
 		args.width = math.floor(math.sqrt(len(order)))  # set new width
 	else:
 		order = ordering.ordering("../../"+args.reference_image, args.width, averages, args.duplicates)[0]
-	print(len(order))
+	print(f"Using width {args.width} with {len(order)} images.")
 
 	# generate mosaic
 	image = generate_mosaic.generate_mosaic(1600, args.width, order)
