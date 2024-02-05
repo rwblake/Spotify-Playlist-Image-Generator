@@ -34,7 +34,7 @@ MAXIMUM_WIDTH = -1
 def get_arguments():
 	parser = argparse.ArgumentParser(description="Create a mosaic playlist cover from a reference image.")
 	parser.add_argument('playlist_URL', type=str,
-		                help="Spotify playlist URL. Starts with \'https://open.spotify.com/playlist/\'.")
+		                help="Spotify playlist URL, or local folder path. URLs start with \'https://open.spotify.com/playlist/\'.")
 	parser.add_argument('reference_image', type=str,
 		                help="Path to reference image. Must be square, and NOT transparent.")
 	parser.add_argument('-w', '--width', nargs='?', default=WIDTH_UNSPECIFIED, const=MAXIMUM_WIDTH, type=int,
@@ -49,7 +49,10 @@ def main():
 	args = get_arguments()
 
 	# download images if required
-	playlist_name = pull_images.pull_images(args.playlist_URL)
+	if Path(args.playlist_URL).is_dir():
+		playlist_name = args.playlist_URL
+	else:
+		playlist_name = pull_images.pull_images(args.playlist_URL)
 
 	# navigate to images folder and get paths to all images
 	os.chdir(playlist_name)
