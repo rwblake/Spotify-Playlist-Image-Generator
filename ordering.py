@@ -13,22 +13,19 @@ def distance(c1, c2):
 	return (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
 
 
-def _ordering(reference_image_path, images_wide, averages, duplicates):
+def _ordering(reference_image, images_wide, averages, duplicates):
 	averages = averages.copy()
-	reference_image = Image.open(reference_image_path)
-	if reference_image.size[0] != reference_image.size[1]:
-		raise Exception("Reference image not square.")
-	reference_image = reference_image.resize((images_wide, images_wide))
-
 	ordering = [None for i in range(images_wide**2)]  # populate array
 	free_pixels = [i for i in range(images_wide**2)]
 	random.shuffle(free_pixels)  # ensure that no pixel is preferentially chosen
 
 	total_distance = 0
+
 	for i, pixel_number in enumerate(free_pixels):
 		reference_pixel = reference_image.getpixel((pixel_number % images_wide, pixel_number // images_wide))
 		best_distance = MAXIMUM_DISTANCE
 		best_path_average = None
+
 		for (path, average) in averages:
 			current_distance = distance(average, reference_pixel)
 			if current_distance < best_distance:
@@ -36,6 +33,7 @@ def _ordering(reference_image_path, images_wide, averages, duplicates):
 
 		if not duplicates:
 			averages.remove(best_path_average)
+
 		ordering[pixel_number] = best_path_average[0]
 		total_distance += best_distance
 
@@ -44,10 +42,18 @@ def _ordering(reference_image_path, images_wide, averages, duplicates):
 
 def ordering(reference_image_path, images_wide, averages, duplicates):
 	# reduce the effects of bad random assignements
-	attempts = []
+	reference_image = Image.open(reference_image_path)
+	if reference_image.size[0] != reference_image.size[1]:
+		raise Exception("Reference image not square.")
+	reference_image = reference_image.resize((images_wide, images_wide))
+
+	best_ordering = ([], MAXIMUM_DISTANCE*images_wide*images_wide)
 	for i in range(10):
-		attempts.append(_ordering(reference_image_path, images_wide, averages, duplicates))
-	return min(attempts, key=lambda x: x[0])
+		current_ordering = attempts.append(_ordering(reference_image, images_wide, averages, duplicates))
+		if current_ordering[1] < best_ordering[1]:
+			best_ordering = current_ordering
+
+	return best_attempt
 
 
 def main():
