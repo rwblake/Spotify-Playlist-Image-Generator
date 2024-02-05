@@ -4,6 +4,9 @@ from PIL import Image
 import random
 
 
+MAXIMUM_DISTANCE = 195075  # = 3* 255**2
+
+
 def distance(c1, c2):
 	r1, g1, b1 = c1
 	r2, g2, b2 = c2
@@ -22,21 +25,21 @@ def _ordering(reference_image_path, images_wide, averages, duplicates):
 	random.shuffle(free_pixels)  # ensure that no pixel is preferentially chosen
 
 	total_distance = 0
-	count = 0
 	for i, pixel_number in enumerate(free_pixels):
 		reference_pixel = reference_image.getpixel((pixel_number % images_wide, pixel_number // images_wide))
-		distances = []
+		best_distance = MAXIMUM_DISTANCE
+		best_path_average = None
 		for (path, average) in averages:
-			distances.append(((path, average), distance(average, reference_pixel)))
+			current_distance = distance(average, reference_pixel)
+			if current_distance < best_distance:
+				distances.append(((path, average), current_distance))
 
-		(path, average), d = min(distances, key=lambda x: x[1])
 		if not duplicates:
-			averages.remove((path, average))
-		ordering[pixel_number] = path
-		total_distance += d
-		count += 1
+			averages.remove(best_path_average)
+		ordering[pixel_number] = best_path_average[0]
+		total_distance += best_distance
 
-	return ordering, d/count
+	return ordering, d
 
 
 def ordering(reference_image_path, images_wide, averages, duplicates):
