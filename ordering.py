@@ -37,7 +37,7 @@ def _ordering(reference_image, images_wide, averages, duplicates):
 		ordering[pixel_number] = best_path_average[0]
 		total_distance += best_distance
 
-	return ordering, d
+	return ordering, d/len(ordering)
 
 
 def ordering(reference_image_path, images_wide, averages, duplicates):
