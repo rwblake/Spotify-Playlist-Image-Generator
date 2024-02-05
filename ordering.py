@@ -29,7 +29,8 @@ def _ordering(reference_image, images_wide, averages, duplicates):
 		for (path, average) in averages:
 			current_distance = distance(average, reference_pixel)
 			if current_distance < best_distance:
-				distances.append(((path, average), current_distance))
+				best_distance = current_distance
+				best_path_average = (path, average)
 
 		if not duplicates:
 			averages.remove(best_path_average)
@@ -37,7 +38,7 @@ def _ordering(reference_image, images_wide, averages, duplicates):
 		ordering[pixel_number] = best_path_average[0]
 		total_distance += best_distance
 
-	return ordering, d/len(ordering)
+	return ordering, total_distance / len(ordering)
 
 
 def ordering(reference_image_path, images_wide, averages, duplicates):
@@ -49,11 +50,11 @@ def ordering(reference_image_path, images_wide, averages, duplicates):
 
 	best_ordering = ([], MAXIMUM_DISTANCE*images_wide*images_wide)
 	for i in range(10):
-		current_ordering = attempts.append(_ordering(reference_image, images_wide, averages, duplicates))
+		current_ordering = _ordering(reference_image, images_wide, averages, duplicates)
 		if current_ordering[1] < best_ordering[1]:
 			best_ordering = current_ordering
 
-	return best_attempt
+	return best_ordering
 
 
 def main():
