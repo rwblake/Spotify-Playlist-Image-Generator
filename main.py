@@ -38,8 +38,8 @@ def get_arguments():
 		                help="Spotify playlist URL, or local folder path. URLs start with \'https://open.spotify.com/playlist/\'.")
 	parser.add_argument('-r', '--reference_image', type=str,
 		                help="Path to reference image. Must be square, and NOT transparent. Otherwise assume random ordering.")
-	parser.add_argument('-w', '--width', nargs='?', default=WIDTH_UNSPECIFIED, const=MAXIMUM_WIDTH, type=int,
-		                help="Width of mosaic in images. Default is automatic. No value picks maximum possible width.")
+	parser.add_argument('-w', '--width', nargs='?', default=WIDTH_UNSPECIFIED, type=int,
+		                help="Width of mosaic in images. Default is automatic.")
 	parser.add_argument('-d', '--duplicates', action='store_true',
 		                help="Allow duplicate images in mosaic.")
 	parser.add_argument('-f', '--force_download', action='store_true',
