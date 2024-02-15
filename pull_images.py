@@ -27,6 +27,17 @@ def download(track):
 		shutil.copyfileobj(res.raw, f)
 
 
+def playlist_name(playlist_URL):
+	# authenticate request
+	auth_manager = SpotifyClientCredentials()
+	sp = spotipy.Spotify(auth_manager=auth_manager)
+
+	# pull from Spotify API
+	playlist = sp.playlist(playlist_URL)  # assume that playlist_URL is valid
+
+	return playlist["name"]
+
+
 def pull_images(playlist_URL):
 	# authenticate request
 	auth_manager = SpotifyClientCredentials()
@@ -35,15 +46,6 @@ def pull_images(playlist_URL):
 	# pull from Spotify API
 	playlist = sp.playlist(playlist_URL)  # assume that playlist_URL is valid
 	tracks = playlist["tracks"]
-
-	# create folder structure
-	if os.path.isdir(playlist["name"]):
-		print("Album folder already exists. No images retrieved.")
-		return playlist["name"]
-	os.mkdir(playlist["name"])
-	os.chdir(playlist["name"])
-	os.mkdir("images")
-	os.chdir("images")
 
 	# loop over each set of 99 songs given by the api
 	track_items = tracks["items"]
@@ -61,8 +63,6 @@ def pull_images(playlist_URL):
 	with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
 		list(tqdm(executor.map(download, track_items), total=len(track_items)))
 
-	# finish in the main directory
-	os.chdir("../..")
 	return playlist["name"]
 
 

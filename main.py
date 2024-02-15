@@ -41,6 +41,8 @@ def get_arguments():
 		                help="Width of mosaic in images. Default is automatic. No value picks maximum possible width.")
 	parser.add_argument('-d', '--duplicates', action='store_true',
 		                help="Allow duplicate images in mosaic.")
+	parser.add_argument('-f', '--force_download', action='store_true',
+		                help="Download images, even if folder already exists.")
 	return parser.parse_args()
 
 
@@ -48,15 +50,25 @@ def main():
 	# get command line arguments
 	args = get_arguments()
 
-	# download images if required
+	# get_playlist name and cd into relevent folder
 	if Path(args.playlist_URL).is_dir():
 		playlist_name = args.playlist_URL
 	else:
-		playlist_name = pull_images.pull_images(args.playlist_URL)
-
-	# navigate to images folder and get paths to all images
+		playlist_name = pull_images.playlist_name(args.playlist_URL)
+	if not Path(playlist_name).is_dir():
+		os.mkdir(playlist_name)
 	os.chdir(playlist_name)
-	os.chdir("images")
+
+	# pull images if required
+	if not Path('images').is_dir():
+		os.mkdir('images')
+		os.chdir('images')
+		pull_images.pull_images(args.playlist_URL)
+	elif args.force_download:
+		os.chdir('images')
+		pull_images.pull_images(args.playlist_URL)
+
+	# get paths to all images
 	image_paths = os.listdir(".")
 	image_paths = filter_duplicates(image_paths)
 
