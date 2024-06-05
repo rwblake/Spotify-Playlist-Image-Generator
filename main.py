@@ -37,15 +37,15 @@ MAXIMUM_WIDTH = -1
 def get_arguments():
 	parser = argparse.ArgumentParser(description="Create a mosaic playlist cover from a reference image.")
 	parser.add_argument('playlist_URL', type=str,
-		                help="Spotify playlist URL, or local folder path. URLs start with \'https://open.spotify.com/playlist/\'.")
-	parser.add_argument('-r', '--reference_image', type=str,
-		                help="Path to reference image. Must be square, and NOT transparent. Otherwise assume random ordering.")
-	parser.add_argument('-w', '--width', nargs='?', default=WIDTH_UNSPECIFIED, type=int,
-		                help="Width of mosaic in images. Default is automatic.")
-	parser.add_argument('-d', '--duplicates', action='store_true',
-		                help="Allow duplicate images in mosaic.")
-	parser.add_argument('-f', '--force_download', action='store_true',
-		                help="Download images, even if folder already exists.")
+		                help="spotify playlist URL (\'https://open.spotify.com/playlist/...\') OR local folder path")
+	parser.add_argument('reference_image', type=str, nargs='?', default=None,
+		                help="path to reference image (must be square)")
+	parser.add_argument('-w', '--width', type=int,
+		                help="width of mosaic in images (default 64x64)")
+	parser.add_argument('-n', '--no-duplicates', action='store_false', dest='duplicates',
+		                help="only use each image once")
+	parser.add_argument('-f', '--force-download', action='store_true', dest='force_download',
+		                help="force image re-downloading when playlist has previously been used")
 	return parser.parse_args()
 
 
