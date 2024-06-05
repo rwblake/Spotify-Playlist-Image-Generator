@@ -9,8 +9,13 @@ MAXIMUM_DISTANCE = 195075  # = 3* 255**2
 
 
 def distance(c1, c2):
-	r1, g1, b1 = c1
-	r2, g2, b2 = c2
+	"Calculate Euclidian distance between two RGB(A) tuples, ignoring alpha"
+	try:
+		r1, g1, b1 = c1
+		r2, g2, b2 = c2
+	except ValueError:
+		r1, g1, b1, _ = c1
+		r2, g2, b2, _ = c2
 	return (r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2
 
 
