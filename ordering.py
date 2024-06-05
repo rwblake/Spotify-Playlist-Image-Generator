@@ -5,8 +5,6 @@ import random
 from tqdm import tqdm
 
 
-MAXIMUM_DISTANCE = 195075  # = 3* 255**2
-
 
 def distance(c1, c2):
 	"Calculate Euclidian distance between two RGB(A) tuples, ignoring alpha"
@@ -26,20 +24,33 @@ def _ordering(reference_image, images_wide, averages, duplicates):
 	random.shuffle(free_pixels)  # ensure that no pixel is preferentially chosen
 
 	total_distance = 0
+	uses = dict()
 
 	for i, pixel_number in enumerate(free_pixels):
 		reference_pixel = reference_image.getpixel((pixel_number % images_wide, pixel_number // images_wide))
-		best_distance = MAXIMUM_DISTANCE
+		best_distance = float('inf')
 		best_path_average = None
 
 		for (path, average) in averages:
 			current_distance = distance(average, reference_pixel)
+			
+			# avoid blocks of the same pixel by exponentially
+			# increasing distance by number of previous assignments
+			if duplicates:
+				if path in uses:
+					current_distance *= 1.03 ** uses[path]
+
 			if current_distance < best_distance:
 				best_distance = current_distance
 				best_path_average = (path, average)
 
 		if not duplicates:
 			averages.remove(best_path_average)
+		else:
+			if best_path_average[0] in uses:
+				uses[best_path_average[0]] += 1
+			else:
+				uses[best_path_average[0]] = 1
 
 		ordering[pixel_number] = best_path_average[0]
 		total_distance += best_distance
@@ -54,7 +65,7 @@ def ordering(reference_image_path, images_wide, averages, duplicates):
 		raise Exception("Reference image not square.")
 	reference_image = reference_image.resize((images_wide, images_wide))
 
-	best_ordering = ([], MAXIMUM_DISTANCE*images_wide*images_wide)
+	best_ordering = ([], float('inf'))
 	for i in tqdm(range(10), total=10):
 		current_ordering = _ordering(reference_image, images_wide, averages, duplicates)
 		if current_ordering[1] < best_ordering[1]:
