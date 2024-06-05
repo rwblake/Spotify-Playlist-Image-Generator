@@ -7,6 +7,8 @@ import imagehash
 import argparse
 from pathlib import Path
 import random
+import sys
+import subprocess
 
 
 import ordering
@@ -47,10 +49,18 @@ def get_arguments():
 	return parser.parse_args()
 
 
+def openImage(path):
+    imageViewerFromCommandLine = {'linux':'xdg-open',
+                                  'win32':'explorer',
+                                  'darwin':'open'}[sys.platform]
+    subprocess.Popen([imageViewerFromCommandLine, path])
+
+
 def main():
 	# get command line arguments
 	args = get_arguments()
 
+	print("1/4 Loading images")
 	# get_playlist name and cd into relevent folder
 	if Path(args.playlist_URL).is_dir():
 		playlist_name = args.playlist_URL
@@ -83,11 +93,12 @@ def main():
 	if not args.duplicates and args.width != WIDTH_UNSPECIFIED and len(image_paths) < args.width**2:
 		raise Exception(f"Not enough images to create mosaic of width {args.width}. Maximum width is {max_width} for {len(image_paths)} images.")
 
+	print("2/4 Checking for duplicate images")
 	if args.reference_image is not None:
 		# calculate average colour for each image
 		averages = average_color.get_average_colors(image_paths)
 		print(f"Available images: {len(averages)}")
-
+		print("3/4 Calculating mosaic layout")
 		# calculate positions (ordering) for images in mosaic
 		if args.width == WIDTH_UNSPECIFIED:
 			# try all widths from 2X2 to max_widthXmax_width
@@ -99,9 +110,9 @@ def main():
 			# choose ordering with minimum error
 			order = min(orders, key=lambda x:x[1])[0]
 			args.width = math.floor(math.sqrt(len(order)))  # set new width
+			print(f"Using width {args.width} with {len(order)} images.")
 		else:
 			order = ordering.ordering("../../"+args.reference_image, args.width, averages, args.duplicates)[0]
-		print(f"Using width {args.width} with {len(order)} images.")
 	else:
 		if args.width == WIDTH_UNSPECIFIED:
 			args.width = max_width
@@ -110,9 +121,12 @@ def main():
 		args.reference_image = 'random'
 
 	# generate mosaic
+	print("4/4 Saving final mosaic")
 	image = generate_mosaic.generate_mosaic(1600, args.width, order)
-	image.save(f"{Path(args.reference_image).stem}_mosaic.png")
-	image.show()
+	image_name = f"{Path(args.reference_image).stem}_mosaic_{args.width}x.png"
+	image.save(image_name)
+	print("Saved as " + image_name)
+	openImage(image_name)
 
 
 if __name__ == "__main__":
