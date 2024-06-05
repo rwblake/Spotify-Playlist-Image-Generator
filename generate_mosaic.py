@@ -3,13 +3,14 @@
 import os
 import math
 from PIL import Image
+from tqdm import tqdm
 
 
 def generate_mosaic(width, images_wide, image_paths):
 	image = Image.new(mode="RGB", size=(width, width))
 	tile_width = width // images_wide
 
-	for i, path in enumerate(image_paths):
+	for i, path in tqdm(enumerate(image_paths), total=len(image_paths)):
 		tmp_image = Image.open(path)
 		tmp_image = tmp_image.resize((tile_width, tile_width))
 		image.paste(tmp_image, (i % images_wide * tile_width, i // images_wide * tile_width))
