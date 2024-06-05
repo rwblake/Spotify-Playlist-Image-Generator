@@ -2,6 +2,7 @@
 
 from PIL import Image
 import random
+from tqdm import tqdm
 
 
 MAXIMUM_DISTANCE = 195075  # = 3* 255**2
@@ -49,7 +50,7 @@ def ordering(reference_image_path, images_wide, averages, duplicates):
 	reference_image = reference_image.resize((images_wide, images_wide))
 
 	best_ordering = ([], MAXIMUM_DISTANCE*images_wide*images_wide)
-	for i in range(10):
+	for i in tqdm(range(10), total=10):
 		current_ordering = _ordering(reference_image, images_wide, averages, duplicates)
 		if current_ordering[1] < best_ordering[1]:
 			best_ordering = current_ordering
