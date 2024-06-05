@@ -1,0 +1,8 @@
+imagedominantcolor==1.0.1
+ImageHash==4.3.1
+numpy==1.24.3
+opencv_python_headless==4.9.0.80
+Pillow==10.3.0
+Requests==2.32.3
+spotipy==2.23.0
+tqdm==4.65.0
