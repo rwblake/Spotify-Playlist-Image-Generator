@@ -82,7 +82,9 @@ def main():
 
 	# get paths to all images
 	image_paths = os.listdir(".")
+	print("2/4 Checking for duplicate images")
 	image_paths = filter_duplicates(image_paths)
+	print(f"Available images: {len(image_paths)}")
 
 	# set correct mosaic width for number of images found
 	max_width = math.floor(math.sqrt(len(image_paths)))
@@ -93,12 +95,10 @@ def main():
 	if not args.duplicates and len(image_paths) < args.width**2:
 		raise Exception(f"Not enough images to create mosaic of width {args.width}. Maximum width is {max_width} for {len(image_paths)} images.")
 
-	print("2/4 Checking for duplicate images")
+	print("3/4 Calculating mosaic layout")
 	if args.reference_image is not None:
 		# calculate average colour for each image
 		averages = average_color.get_average_colors(image_paths)
-		print(f"Available images: {len(averages)}")
-		print("3/4 Calculating mosaic layout")
 		# calculate positions (ordering) for images in mosaic
 		order = ordering.ordering("../../"+args.reference_image, args.width, averages, args.duplicates)[0]
 	else:
