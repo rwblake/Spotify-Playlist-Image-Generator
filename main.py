@@ -30,7 +30,6 @@ def filter_duplicates(paths):
 	return ret
 
 
-WIDTH_UNSPECIFIED = 0
 MAXIMUM_WIDTH = -1
 
 
@@ -87,10 +86,11 @@ def main():
 
 	# set correct mosaic width for number of images found
 	max_width = math.floor(math.sqrt(len(image_paths)))
-	if args.width == MAXIMUM_WIDTH:
-		args.width = max_width
+	if args.width == MAXIMUM_WIDTH or args.width is None:
+		# ensure there is room for all images to be acommodated
+		args.width = max_width + 1
 	# check if there are enough images to create the mosaic
-	if not args.duplicates and args.width != WIDTH_UNSPECIFIED and len(image_paths) < args.width**2:
+	if not args.duplicates and len(image_paths) < args.width**2:
 		raise Exception(f"Not enough images to create mosaic of width {args.width}. Maximum width is {max_width} for {len(image_paths)} images.")
 
 	print("2/4 Checking for duplicate images")
@@ -100,24 +100,15 @@ def main():
 		print(f"Available images: {len(averages)}")
 		print("3/4 Calculating mosaic layout")
 		# calculate positions (ordering) for images in mosaic
-		if args.width == WIDTH_UNSPECIFIED:
-			# try all widths from 2X2 to max_widthXmax_width
-			orders = []
-			for i in range(max_width, 1, -1):
-				order = ordering.ordering("../../"+args.reference_image, i, averages, args.duplicates)
-				orders.append(order)
-				print(f"Width: {i:03}\tError: {order[1]}")
-			# choose ordering with minimum error
-			order = min(orders, key=lambda x:x[1])[0]
-			args.width = math.floor(math.sqrt(len(order)))  # set new width
-			print(f"Using width {args.width} with {len(order)} images.")
-		else:
-			order = ordering.ordering("../../"+args.reference_image, args.width, averages, args.duplicates)[0]
+		order = ordering.ordering("../../"+args.reference_image, args.width, averages, args.duplicates)[0]
 	else:
-		if args.width == WIDTH_UNSPECIFIED:
-			args.width = max_width
-		random.shuffle(image_paths)
-		order = image_paths[:max_width**2]
+		order = image_paths
+
+		discrepancy = args.width**2 - len(image_paths)
+		if discrepancy > 0:
+			order.extend([random.choice(image_paths) for _ in range(discrepancy)])
+		
+		random.shuffle(order)
 		args.reference_image = 'random'
 
 	# generate mosaic
