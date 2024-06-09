@@ -61,11 +61,13 @@ def get_arguments():
 	parser.add_argument('reference_image', type=str, nargs='?', default=None,
 		                help="path to reference image (must be square)")
 	parser.add_argument('-w', '--width', type=int,
-		                help="width of mosaic in images (default 64x64)")
+		                help="width of mosaic in images")
 	parser.add_argument('-n', '--no-duplicates', action='store_false', dest='duplicates',
 		                help="only use each image once")
 	parser.add_argument('-f', '--force-download', action='store_true', dest='force_download',
 		                help="force image re-downloading when playlist has previously been used")
+	parser.add_argument('-p' '--pixel-width', type=int, default=1680, dest='pixel_width',
+										help="width of final output file in pixels (default 1680x1680)")
 	return parser.parse_args()
 
 
@@ -117,11 +119,15 @@ def main():
 	if not args.duplicates and len(images) < args.width**2:
 		raise Exception(f"Not enough images to create mosaic of width {args.width}. Maximum width is {max_width} for {len(image_paths)} images.")
 
+	if args.reference_image is not None:
+		args.width = 64
+
 	print("3/5 Preprocessing images")
-	images = resize_images(images, 1600//args.width)
+	images = resize_images(images, args.pixel_width//args.width)
 
 	print("4/5 Calculating mosaic layout")
 	if args.reference_image is not None:
+		args.width = 64
 		# calculate average colour for each image
 		averages = average_color.get_average_colors(images)
 		# calculate positions (ordering) for images in mosaic
@@ -138,7 +144,7 @@ def main():
 
 	# generate mosaic
 	print("5/5 Saving final mosaic")
-	image = generate_mosaic.generate_mosaic(1600, args.width, order)
+	image = generate_mosaic.generate_mosaic(args.pixel_width, args.width, order)
 	image_name = f"{Path(args.reference_image).stem}_mosaic_{args.width}x.png"
 	image.save(image_name)
 	print("Saved as " + image_name)
