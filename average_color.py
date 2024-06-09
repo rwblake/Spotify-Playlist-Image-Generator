@@ -5,18 +5,23 @@ def get_dominant_colors(image_paths):
 	return [(path, DominantColor(path).rgb) for path in image_paths]
 
 
-def get_mean_colors(image_paths):
-	import cv2
+def get_mean_colors(images):
 	import numpy
 	ret = []
-	for path in image_paths:
-		ret.append((path, list(numpy.average(numpy.average(cv2.imread(path), axis=0), axis=0))[::-1]))
+	for image in images:
+		average = numpy.average(image.getdata(), axis=0)
+		if average.size == 3:
+			# rgb
+			ret.append((image, list(average)))
+		else:
+			# monochrome
+			ret.append((image, (average, average, average)))
 	return ret
 
 
-def get_average_colors(image_paths):
-	# averages = [(path, average)]
-	return get_mean_colors(image_paths)
+def get_average_colors(images):
+	"""averages = [(image, average), ...]"""
+	return get_mean_colors(images)
 
 
 def main():

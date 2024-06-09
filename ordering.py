@@ -29,30 +29,32 @@ def _ordering(reference_image, images_wide, averages, duplicates):
 	for i, pixel_number in enumerate(free_pixels):
 		reference_pixel = reference_image.getpixel((pixel_number % images_wide, pixel_number // images_wide))
 		best_distance = float('inf')
-		best_path_average = None
+		best_image_average = None
+		best_index = None
 
-		for (path, average) in averages:
+		for index, (image, average) in enumerate(averages):
 			current_distance = distance(average, reference_pixel)
 			
 			# avoid blocks of the same pixel by exponentially
 			# increasing distance by number of previous assignments
 			if duplicates:
-				if path in uses:
-					current_distance *= 1.03 ** uses[path]
+				if index in uses:
+					current_distance *= 1.03 ** uses[index]
 
 			if current_distance < best_distance:
 				best_distance = current_distance
-				best_path_average = (path, average)
+				best_image_average = (image, average)
+				best_index = index
 
 		if not duplicates:
-			averages.remove(best_path_average)
+			averages.remove(best_image_average)
 		else:
-			if best_path_average[0] in uses:
-				uses[best_path_average[0]] += 1
+			if best_index in uses:
+				uses[best_index] += 1
 			else:
-				uses[best_path_average[0]] = 1
+				uses[best_index] = 1
 
-		ordering[pixel_number] = best_path_average[0]
+		ordering[pixel_number] = best_image_average[0]
 		total_distance += best_distance
 
 	return ordering, total_distance / len(ordering)

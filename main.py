@@ -17,16 +17,31 @@ import generate_mosaic
 import pull_images
 
 
-def filter_duplicates(paths):
-	"""Return image paths for images that are not identical. Using imagehash to check for image similarity."""
+def open_images(image_paths):
+	"""List of opened PIL Image type objects from list of paths"""
+	images = []
+	for image_path in image_paths:
+		images.append(Image.open(image_path))
+	return images
+
+
+def resize_images(images, tile_width):
+	ret = []
+	for image in images:
+		ret.append(image.resize((tile_width, tile_width)))
+	return ret
+
+
+def filter_duplicates(images):
+	"""Return images that are not identical. Using imagehash to check for image similarity."""
 	hashes = []
 	ret = []
-	for path in paths:
-		image_hash = imagehash.average_hash(Image.open(path))
+	for image in images:
+		image_hash = imagehash.average_hash(image)
 		if image_hash in hashes:
 			continue
 		hashes.append(image_hash)
-		ret.append(path)
+		ret.append(image)
 	return ret
 
 
@@ -82,31 +97,34 @@ def main():
 
 	# get paths to all images
 	image_paths = os.listdir(".")
-	print("2/4 Checking for duplicate images")
-	image_paths = filter_duplicates(image_paths)
-	print(f"Available images: {len(image_paths)}")
+	print("2/4 Preprocessing images")
+	images = open_images(image_paths)
+	images = filter_duplicates(images)
+	print(f"Available images: {len(images)}")
 
 	# set correct mosaic width for number of images found
-	max_width = math.floor(math.sqrt(len(image_paths)))
+	max_width = math.floor(math.sqrt(len(images)))
 	if args.width == MAXIMUM_WIDTH or args.width is None:
 		# ensure there is room for all images to be acommodated
 		args.width = max_width + 1
 	# check if there are enough images to create the mosaic
-	if not args.duplicates and len(image_paths) < args.width**2:
+	if not args.duplicates and len(images) < args.width**2:
 		raise Exception(f"Not enough images to create mosaic of width {args.width}. Maximum width is {max_width} for {len(image_paths)} images.")
+
+	images = resize_images(images, 1600//args.width)
 
 	print("3/4 Calculating mosaic layout")
 	if args.reference_image is not None:
 		# calculate average colour for each image
-		averages = average_color.get_average_colors(image_paths)
+		averages = average_color.get_average_colors(images)
 		# calculate positions (ordering) for images in mosaic
 		order = ordering.ordering("../../"+args.reference_image, args.width, averages, args.duplicates)[0]
 	else:
-		order = image_paths
+		order = images
 
-		discrepancy = args.width**2 - len(image_paths)
+		discrepancy = args.width**2 - len(images)
 		if discrepancy > 0:
-			order.extend([random.choice(image_paths) for _ in range(discrepancy)])
+			order.extend([random.choice(images) for _ in range(discrepancy)])
 		
 		random.shuffle(order)
 		args.reference_image = 'random'
