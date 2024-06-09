@@ -9,6 +9,9 @@ from pathlib import Path
 import random
 import sys
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
+from itertools import repeat
 
 
 import ordering
@@ -25,10 +28,12 @@ def open_images(image_paths):
 	return images
 
 
+def resize_image(image, tile_width):
+	return image.resize((tile_width, tile_width))
+
 def resize_images(images, tile_width):
-	ret = []
-	for image in images:
-		ret.append(image.resize((tile_width, tile_width)))
+	with ThreadPoolExecutor() as executor:
+		ret = list(tqdm(executor.map(resize_image, images, repeat(tile_width)), total=len(images)))
 	return ret
 
 
@@ -36,8 +41,9 @@ def filter_duplicates(images):
 	"""Return images that are not identical. Using imagehash to check for image similarity."""
 	hashes = []
 	ret = []
-	for image in images:
-		image_hash = imagehash.average_hash(image)
+	with ThreadPoolExecutor() as executor:
+		image_hashes = list(tqdm(executor.map(imagehash.average_hash, images), total=len(images))) 
+	for image, image_hash in zip(images, image_hashes):
 		if image_hash in hashes:
 			continue
 		hashes.append(image_hash)
@@ -74,7 +80,7 @@ def main():
 	# get command line arguments
 	args = get_arguments()
 
-	print("1/4 Loading images")
+	print("1/5 Loading images")
 	# get_playlist name and cd into relevent folder
 	if Path(args.playlist_URL).is_dir():
 		playlist_name = args.playlist_URL
@@ -97,7 +103,7 @@ def main():
 
 	# get paths to all images
 	image_paths = os.listdir(".")
-	print("2/4 Preprocessing images")
+	print("2/5 Checking for duplicate images")
 	images = open_images(image_paths)
 	images = filter_duplicates(images)
 	print(f"Available images: {len(images)}")
@@ -111,9 +117,10 @@ def main():
 	if not args.duplicates and len(images) < args.width**2:
 		raise Exception(f"Not enough images to create mosaic of width {args.width}. Maximum width is {max_width} for {len(image_paths)} images.")
 
+	print("3/5 Preprocessing images")
 	images = resize_images(images, 1600//args.width)
 
-	print("3/4 Calculating mosaic layout")
+	print("4/5 Calculating mosaic layout")
 	if args.reference_image is not None:
 		# calculate average colour for each image
 		averages = average_color.get_average_colors(images)
@@ -130,7 +137,7 @@ def main():
 		args.reference_image = 'random'
 
 	# generate mosaic
-	print("4/4 Saving final mosaic")
+	print("5/5 Saving final mosaic")
 	image = generate_mosaic.generate_mosaic(1600, args.width, order)
 	image_name = f"{Path(args.reference_image).stem}_mosaic_{args.width}x.png"
 	image.save(image_name)
