@@ -2,7 +2,7 @@
 ## Generate an aesthetic mosaic playlist image from album art in a spotify playlist.
 Input a spotify playlist URL, and optionally a reference image that you want your mosaic to mimic.
 
-![mosaic of a black spotify loho on a white background with rainbow accents in the centre](.spotify_example.png)
+![mosaic of a black spotify logo on a white background with rainbow accents in the centre](spotify_example.png)
 
 ## Setup
 - To make use of this package, you need to create an app at the [developer.spotify.com] website. For this, follow these steps:
